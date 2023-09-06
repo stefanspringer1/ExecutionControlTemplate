@@ -27,6 +27,7 @@ struct DistributedActorsTest {
         /// This handler will be called when all work is done.
         let allDoneHandler = { finished = true }
         
+        /// Initializing the orchestration.
         let orchestration = await WorkOrchestration<DocumentWorkItem,DocumentProcessingMessage>(
             workItemsStack: workitemsStack,
             parallelWorkers: 2,
@@ -35,13 +36,14 @@ struct DistributedActorsTest {
             allDoneHandler: allDoneHandler
         )
         
+        /// Starting the work.
         await orchestration.start()
 
+        /// The following keeps the application alive until all work is done.
+        /// The according implementation in an actual application might be smarter!
         repeat {
             
             /// Wait a bit before testing the `finished` value (again).
-            /// This keeps the application alive; the according implementation in an actual
-            /// application might be smarter!
             try await Task.sleep(nanoseconds: UInt64(0.1 * Double(NSEC_PER_SEC)))
             
             /// The following code might stop a worker based on some random values.
