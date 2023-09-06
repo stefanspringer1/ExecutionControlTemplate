@@ -50,7 +50,10 @@ actor DocumentProcessor: WorkItemProcessor {
         self.backCommunicationHandler = backCommunicationHandler
     }
     
+    // The following are some names for steps to be executed in the according order
+    // (the execution will only be simulated).
     private let steps = ["step1", "step2", "step3", "step4"]
+    
     private var stepIndex = -1
     private var status: Status = .initialized
     private var desiredStatus: Status? = nil
@@ -82,7 +85,7 @@ actor DocumentProcessor: WorkItemProcessor {
                 stepIndex += 1
                 try await backCommunicationHandler(id, .progress(percent: 100.0 * Double(stepIndex) / Double(steps.count), description: steps[stepIndex]))
                 
-                // simulate step:
+                // simulate the step:
                 let slowdown = Double.random(in: 1.0..<1.5)
                 try await Task.sleep(nanoseconds: UInt64(workItem.documentSize / Double(steps.count) * slowdown * Double(NSEC_PER_SEC)))
             }
