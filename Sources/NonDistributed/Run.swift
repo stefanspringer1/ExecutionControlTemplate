@@ -94,7 +94,7 @@ actor DocumentProcessor: WorkItemProcessor {
                 try await backCommunicationHandler(id, .progress(percent: 100.0 * Double(stepIndex) / Double(steps.count), description: steps[stepIndex]))
                 
                 // simulate step:
-                try await Task.sleep(nanoseconds: UInt64(workItem.documentSize * Double(NSEC_PER_SEC)))
+                try await Task.sleep(nanoseconds: UInt64(workItem.documentSize * Double.random(in: 1..<1.5) * Double(NSEC_PER_SEC)))
             }
             try await backCommunicationHandler(id, .progress(percent: 100.0, description: "finished"))
             try await backCommunicationHandler(id, .finished)
@@ -117,7 +117,7 @@ actor DocumentProcessor: WorkItemProcessor {
     
 }
 
-actor DocumentWorkOrchestration {
+actor WorkOrchestration {
     
     var workitemsWaiting: [DocumentWorkItem]
     
@@ -149,8 +149,9 @@ actor DocumentWorkOrchestration {
         workerCount += 1; let workerID = workerCount
         let workItemProcessor = DocumentProcessor(workerID: workerCount,workItem: workItem, backCommunicationHandler: self.backCommunication)
         do {
-            try await workItemProcessor.process()
             workitemsStarted[workerID] = (workItem,workItemProcessor)
+            await logger.log("starting #\(workerID) worker for \(workItem)")
+            try await workItemProcessor.process()
         } catch {
             await logger.log("failed starting worker for \(workItem)")
             workitemsFailedStarted[workerID] = workItem
@@ -201,7 +202,7 @@ struct DistributedActorsTest {
         
         let logger = PrintLogger()
         
-        let orchestration = DocumentWorkOrchestration(workitems: workitems, parallelWorkers: 2, logger: logger)
+        let orchestration = WorkOrchestration(workitems: workitems, parallelWorkers: 2, logger: logger)
         
         await orchestration.start()
         
