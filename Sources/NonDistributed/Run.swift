@@ -1,6 +1,10 @@
 /**
- This is an example apllication that uses simple framework that allows the (parallel) execution
+ This is an example application that uses simple framework that allows the (parallel) execution
  of workers for the same type of work items.
+ 
+ The framework is implemented in the file `Framework.swift`.
+ 
+ The implementation of the sample use case (which uses the framwork) is in the file `DocumentProcessing`.
  */
 
 import Foundation
