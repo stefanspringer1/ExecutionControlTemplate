@@ -1,7 +1,11 @@
 import Foundation
 import ArgumentParser
 import Utilities
+
+// The following imports are from targets in this Swift package:
+import Logging
 import Framework
+import DocumentProcessing
 
 @main
 struct DistributedMaster: ParsableCommand {
@@ -21,16 +25,24 @@ struct DistributedMaster: ParsableCommand {
         
         let files = try url.files(withPattern: filePattern, findRecursively: true)
         
-        var workerCount = 0
-        for file in files {
-            workerCount += 1
+        var workitemsStack: [DocumentWorkItem]
+        do {
+            var countBack = files.count + 1 // we count back because we are using a stack!
+            workitemsStack = files.map{ file in
+                countBack -= 1
+                return DocumentWorkItem(documentURL: file, id: String(countBack))
+            }
+        }
+        
+        while let workItem = workitemsStack.popLast() {
+
             runProgram(
                 executableURL: workerProgram,
                 environment: nil,
                 arguments: [
-                    file.osPath,
+                    workItem.documentURL.osPath,
                     "--worker-id",
-                    String(workerCount),
+                    workItem.id,
                 ],
                 currentDirectoryURL: workerProgram.deletingLastPathComponent(), // to be changed
                 qualityOfService: .default,
@@ -38,6 +50,7 @@ struct DistributedMaster: ParsableCommand {
                 errorOutHandler: { print(($0), to: &StandardError.instance) }, // TODO: use logger
                 commandLineDebugHandler: { _ in } // TODO: use logger
             )
+            
         }
     }
     

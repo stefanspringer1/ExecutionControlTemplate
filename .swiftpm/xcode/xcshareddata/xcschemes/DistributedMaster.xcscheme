@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/stefan/tmp/testpublikation/20220909.x2cec2af"
+            argument = "/Users/stefan/tmp/testpublikation"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

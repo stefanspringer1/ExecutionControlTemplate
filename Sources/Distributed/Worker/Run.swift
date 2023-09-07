@@ -1,6 +1,10 @@
 import Foundation
 import ArgumentParser
+
+// The following imports are from targets in this Swift package:
+import Logging
 import Framework
+import DocumentProcessing
 
 @main
 struct DistributedWorker: ParsableCommand {
@@ -12,7 +16,7 @@ struct DistributedWorker: ParsableCommand {
     var workerID: String
     
     mutating func run() throws {
-        sayHello(to: "DistributedWorker \(workerID) for file [\(path)]") // calling function from shared framework (in folder "DistributedFramework")
+        sayHello(to: "DistributedWorker \(workerID) for file \(path)") // calling function from shared framework (in folder "DistributedFramework")
     }
     
 }
