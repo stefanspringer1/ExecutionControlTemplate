@@ -10,7 +10,7 @@
 import Foundation
 
 @main
-struct DistributedActorsTest {
+struct NonDistributed {
     
     static func main() async throws {
         
