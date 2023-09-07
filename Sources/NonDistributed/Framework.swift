@@ -33,7 +33,7 @@ public enum Control {
 
 /// This is a worker (or "processor") for a work item.
 /// I.e. the work for that item is done here!
-public protocol WorkItemProcessor<WorkItem,Message> where WorkItem: WorkItemWithID {
+public protocol WorkItemProcessor<WorkItem,Message> where WorkItem: WorkItemWithID, Message: CustomStringConvertible {
     
     associatedtype WorkItem
     associatedtype Message
@@ -46,7 +46,7 @@ public protocol WorkItemProcessor<WorkItem,Message> where WorkItem: WorkItemWith
 }
 
 /// For the orchestration of the work, a function has to be provided which return a processor for a given work item.
-typealias WorkItemProcessorProducer<WorkItem,Message> = (WorkItem,WorkerID,@escaping BackCommunicationHandler<Message>) async -> any WorkItemProcessor where WorkItem: WorkItemWithID
+typealias WorkItemProcessorProducer<WorkItem,Message> = (WorkItem,WorkerID,@escaping BackCommunicationHandler<Message>) async -> any WorkItemProcessor where WorkItem: WorkItemWithID, Message: CustomStringConvertible
 
 /// This is the orchestration of the work.
 ///
@@ -72,7 +72,7 @@ typealias WorkItemProcessorProducer<WorkItem,Message> = (WorkItem,WorkerID,@esca
 /// If a worker has been stopped, the according work item will not hinder the orchestration
 /// of asserting that all work has been done. But if a work item whose processing has been
 /// pause does postpone this assertion.
-public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID {
+public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID, Message: CustomStringConvertible {
     
     var workitemsWaiting: [WorkItem]
     
@@ -100,7 +100,7 @@ public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID 
         logger: Logger,
         allDoneHandler: @escaping () -> ()
     ) async {
-        await logger.log("Initializing an orchestration for \(workItemsStack.count) work items to to processed with \(parallelWorkers) workers in parallel.")
+        await logger.log(workerID: nil, "Initializing an orchestration for \(workItemsStack.count) work items to to processed with \(parallelWorkers) workers in parallel.")
         self.workitemsWaiting = workItemsStack
         self.parallelWorkers = parallelWorkers
         self.workItemProcessorProducer = workItemProcessorProducer
@@ -116,7 +116,7 @@ public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID 
     private func startNextWorker() async -> Bool {
         guard let workItem = workitemsWaiting.popLast() else {
             if await allDone() {
-                await logger.log("All done!")
+                await logger.log(workerID: nil, "All done!")
                 allDoneHandler()
             }
             return false
@@ -127,10 +127,10 @@ public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID 
         let workItemProcessor = await workItemProcessorProducer(workItem, workerID, self.backCommunication)
         do {
             workitemsStarted[workerID] = (workItem,workItemProcessor)
-            await logger.log("starting #\(workerID) worker for \(workItem)")
+            await logger.log(workerID: nil, "starting #\(workerID) worker for \(workItem)")
             try await workItemProcessor.process()
         } catch {
-            await logger.log("failed starting worker for \(workItem)")
+            await logger.log(workerID: nil, "failed starting worker for \(workItem)")
             workitemsFailedStarted[workerID] = workItem
         }
         return true
@@ -147,27 +147,27 @@ public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID 
     func backCommunication(workerID: WorkerID, message: BackCommunication<Message>) async {
         switch message {
         case .progress(percent: let percent, description: let description):
-            await logger.log("worker \(workerID): progress \(percent) %: \(description)")
+            await logger.log(workerID: workerID, "progress \(percent) %: \(description)")
         case .finished:
-            await logger.log("worker \(workerID): finished")
+            await logger.log(workerID: workerID, "finished")
             if let (workItem,_) = workitemsStarted[workerID] {
                 workitemsStarted[workerID] = nil
                 workitemsFinsihed[workerID] = workItem
             }
             await startNextWorker()
         case .message(message: let message):
-            await logger.log("worker \(workerID): info: \(message)")
+            await logger.log(workerID: workerID, message.description)
         case .stopped:
             if let entry = workitemsStarted[workerID] {
                 workitemsStarted[workerID] = nil
                 workitemsStopped[workerID] = entry
             }
-            await logger.log("worker \(workerID): stopped!")
+            await logger.log(workerID: workerID, "worker stopped!")
             await startNextWorker()
         case .paused:
-            await logger.log("worker \(workerID): paused!")
+            await logger.log(workerID: workerID, "worker paused!")
         case .resumed:
-            await logger.log("worker \(workerID): resumed")
+            await logger.log(workerID: workerID, "worker resumed...")
         }
         
     }
