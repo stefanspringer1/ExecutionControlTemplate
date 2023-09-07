@@ -27,7 +27,7 @@ struct DistributedMaster: ParsableCommand {
         
         var workitemsStack: [DocumentWorkItem]
         do {
-            var countBack = files.count + 1 // we count back because we are using a stack (but this counting does not really matter)
+            var countBack = files.count + 1 // we count back because we are using a stack (but the direction of the counting does not really matter)
             workitemsStack = files.map{ file in
                 countBack -= 1
                 return DocumentWorkItem(documentURL: file, id: String(countBack))
