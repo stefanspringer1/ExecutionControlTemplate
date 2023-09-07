@@ -16,7 +16,7 @@ struct DistributedWorker: ParsableCommand {
     var workerID: String
     
     mutating func run() throws {
-        sayHello(to: "DistributedWorker \(workerID) for file \(path)") // calling function from shared framework (in folder "DistributedFramework")
+        sayHello(to: "DistributedWorker for item \(workerID) for file \(path)") // calling function from shared framework (in folder "DistributedFramework")
     }
     
 }
