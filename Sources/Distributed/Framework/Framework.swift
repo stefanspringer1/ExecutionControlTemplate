@@ -89,10 +89,6 @@ public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID,
     var workitemsStopped = [WorkerID:(workItem: WorkItem,processor: any WorkItemProcessor)]()
     var workitemsFinsihed = [WorkerID:WorkItem]()
     
-    public func control(workerWithID workerID: WorkerID, commanding control: Control) async throws {
-        try await workitemsStarted[workerID]?.processor.handle(control: control)
-    }
-    
     let parallelWorkers: Int
     
     private let workItemProcessorProducer: WorkItemProcessorProducer<WorkItem,Message>
@@ -152,6 +148,7 @@ public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID,
         }
     }
     
+    /// from the worker to the orchestration:
     func backCommunication(workerID: WorkerID, message: BackCommunication<Message>) async {
         switch message {
         case .progress(percent: let percent, description: let description):
@@ -178,6 +175,11 @@ public actor WorkOrchestration<WorkItem,Message> where WorkItem: WorkItemWithID,
             await logger.log(sourceID: workerID, "worker resumed...")
         }
         
+    }
+    
+    /// from the orchestration to the worker:
+    public func control(workerWithID workerID: WorkerID, commanding control: Control) async throws {
+        try await workitemsStarted[workerID]?.processor.handle(control: control)
     }
     
 }
