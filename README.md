@@ -1,6 +1,6 @@
 # ExecutionControlTemplate
 
-A temnplate of how to control the excution of tasks of the same kind.
+A template to show how the excution of tasks of the same kind could be controlled.
 
 ## "NonDistributed"
 
